@@ -86,6 +86,7 @@ function speak(text) {
     utterThis.voice = selectedVoice;
     utterThis.pitch = 1;
     utterThis.rate = 1;
+    utterThis.lang = "en-US";
     synth.speak(utterThis);
   }
 }
