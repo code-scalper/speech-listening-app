@@ -83,10 +83,11 @@ function speak(text) {
     utterThis.onerror = function (event) {
       console.error("SpeechSynthesisUtterance.onerror");
     };
+    console.log(selectedVoice);
     utterThis.voice = selectedVoice;
     utterThis.pitch = 1;
     utterThis.rate = 1;
-    utterThis.lang = "en-US";
+    utterThis.lang = selectedVoice.lang;
     synth.speak(utterThis);
   }
 }
