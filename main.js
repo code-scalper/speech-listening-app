@@ -1,9 +1,11 @@
 // DOM
 const checkButton = document.querySelector(".check-button");
 const saveButton = document.querySelector(".save-button");
-const startButton = document.querySelector("#start-button");
+const typeButton = document.querySelector(".type-button");
+const startButton = document.querySelector(".start-button");
 const answerInput = document.querySelector(".answer-input");
 const wordInput = document.querySelector(".word-input");
+const resultText = document.querySelector(".result-text");
 const stateText = document.querySelector(".state-text");
 const studyInfoTotal = document.querySelector(".total");
 const studyInfoCorrect = document.querySelector(".correct");
@@ -39,6 +41,13 @@ function playGame() {
   speak(currentPhrase.eng);
 }
 
+function gameOver() {
+  resultText.innerText = "Press Start!";
+  setIcon("bi-pause-fill", "bi-play-fill", "remove", "error");
+  isPlaying = false;
+  gamePhrases = [...phrases];
+}
+
 function setVoices(type) {
   return voices.filter((sound) => VOICE_TYPE[type].includes(sound.lang));
 }
@@ -58,6 +67,7 @@ function genRandomVoiceIndex() {
 }
 
 function speak(text) {
+  resultText.innerText = "Listening...";
   const selectedVoice = voices[genRandomVoiceIndex()];
 
   if (synth.speaking) {
@@ -67,6 +77,7 @@ function speak(text) {
   if (text !== "") {
     const utterThis = new SpeechSynthesisUtterance(text);
     utterThis.onend = function (event) {
+      resultText.innerText = "Type...";
       answerInput.focus();
     };
     utterThis.onerror = function (event) {
@@ -75,7 +86,6 @@ function speak(text) {
     utterThis.voice = selectedVoice;
     utterThis.pitch = 1;
     utterThis.rate = 1;
-    console.log(synth, utterThis, "utterThis");
     synth.speak(utterThis);
   }
 }
@@ -105,11 +115,21 @@ function checkAnswer() {
     let letter = currWord.charAt(i);
     if (currWordUpper.charAt(i) !== ansWordUpper.charAt(i)) {
       letter = `<span class='error'>${ansWord.charAt(i)}</span>`;
+    } else {
     }
     bSpan = bSpan + letter;
     i++;
   }
   const contents = `<span>${aSpan}</span><span>${bSpan}</span>`;
+  if (currWordUpper === ansWordUpper) {
+    resultText.classList.add("success");
+    resultText.classList.remove("error");
+    resultText.innerText = "Correct!";
+  } else {
+    resultText.classList.remove("success");
+    resultText.classList.add("error");
+    resultText.innerText = "Wrong!";
+  }
   const li = document.createElement("li");
   li.innerHTML = contents;
   historyList.appendChild(li);
@@ -126,7 +146,11 @@ answerInput.addEventListener("keypress", (e) => {
   if (e.keyCode !== 13) return;
   checkAnswer();
 });
-
+typeButton.addEventListener("click", () => {
+  voiceType = voiceType === "native" ? "esl" : "native";
+  typeButton.innerText = voiceType.toUpperCase();
+  populateVoiceList();
+});
 startButton.addEventListener("click", () => {
   if (isPlaying) {
     setIcon("bi-pause-fill", "bi-play-fill", "remove", "error");

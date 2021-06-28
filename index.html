@@ -18,11 +18,19 @@
   <body>
     <div class="wrapper">
       <header class="header">
-        <i class="bi bi-play-fill" id="start-button"></i>
-        <button class="mode-button">Speech Mode</button>
+        <div>
+          <button class="start-button button">
+            <i class="bi bi-play-fill"></i>
+            <button class="type-button button">NATIVE</button>
+          </button>
+        </div>
+        <div>
+          <button class="mode-button button">Speech Mode</button>
+        </div>
       </header>
       <div class="receiver container">
-        <h2 class="state-text">Ready</h2>
+        <p class="result-text">Press Start!</p>
+        <p class="state-text">Ready</p>
         <div class="input-box">
           <input type="text" class="answer-input" />
           <button class="check-button">Check!</button>
