@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Document</title>
+    <link rel="stylesheet" href="main.css" />
+    <!-- CSS only -->
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.5.0/font/bootstrap-icons.css"
+    />
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+  </head>
+  <body>
+    <div class="wrapper">
+      <header class="header">
+        <i class="bi bi-play-fill" id="start-button"></i>
+        <button class="mode-button">Speech Mode</button>
+      </header>
+      <div class="receiver container">
+        <h2 class="state-text">Ready</h2>
+        <div class="input-box">
+          <input type="text" class="answer-input" />
+          <button class="check-button">Check!</button>
+        </div>
+        <div class="result">
+          <ul></ul>
+        </div>
+      </div>
+      <div class="submitter container">
+        <h2>단어입력</h2>
+        <div class="input-box">
+          <input type="text" class="word-input" />
+          <button class="save-button">Save!</button>
+        </div>
+        <ul></ul>
+      </div>
+
+      <div class="contents"></div>
+    </div>
+    <script src="main.js" type="module"></script>
+  </body>
+</html>
