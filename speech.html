@@ -19,9 +19,8 @@
     <div class="wrapper">
       <header class="header">
         <div>
-          <button class="start-button button waiting">
+          <button class="start-button button">
             <i class="bi bi-play-fill"></i>
-            <i class="bi bi-pause-fill"></i>
             <button class="type-button button">NATIVE</button>
           </button>
         </div>
@@ -29,16 +28,27 @@
           <button class="mode-button button">Speech Mode</button>
         </div>
       </header>
-      <div class="contents listening">
-        <p class="display-text">Press Start!</p>
+      <div class="receiver container">
+        <p class="result-text">Press Start!</p>
         <p class="state-text">Ready</p>
         <div class="input-box">
-          <input type="text" class="input" />
+          <input type="text" class="answer-input" />
           <button class="check-button">Check!</button>
         </div>
+        <div class="result">
+          <ul></ul>
+        </div>
       </div>
-      <ul class="result"></ul>
+      <div class="displayer container">
+        <p class="display-text">Press Start!</p>
+        <p class="state-text">Ready</p>
+        <div class="result">
+          <ul></ul>
+        </div>
+      </div>
+
+      <div class="contents"></div>
     </div>
-    <script src="main.js" type="module"></script>
+    <script src="speechRecognition.js" type="module"></script>
   </body>
 </html>

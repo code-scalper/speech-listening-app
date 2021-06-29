@@ -1,35 +1,56 @@
-// DOM
-const checkButton = document.querySelector(".check-button");
-const saveButton = document.querySelector(".save-button");
-const typeButton = document.querySelector(".type-button");
-const startButton = document.querySelector(".start-button");
-const answerInput = document.querySelector(".answer-input");
-const wordInput = document.querySelector(".word-input");
-const resultText = document.querySelector(".result-text");
-const stateText = document.querySelector(".state-text");
-const studyInfoTotal = document.querySelector(".total");
-const studyInfoCorrect = document.querySelector(".correct");
-const historyContainer = document.querySelector(".result");
-const historyList = document.querySelector(".result > ul");
-
-// Variables
+// modules
 import { phrases, VOICE_TYPE } from "./phrases.js";
 
-const synth = window.speechSynthesis;
+// DOM
+// buttons
+const checkButton = document.querySelector(".check-button");
+const typeButton = document.querySelector(".type-button");
+const startButton = document.querySelector(".start-button");
+const modeButton = document.querySelector(".mode-button");
+
+// input
+const wordInput = document.querySelector(".input-box input");
+
+// text
+const displayText = document.querySelector(".display-text");
+const stateText = document.querySelector(".state-text");
+
+// wrapper
+const resultList = document.querySelector(".result");
+
+// speech APIs
+const {
+  speechSynthesis,
+  SpeechRecognition,
+  webkitSpeechRecognition,
+  SpeechGrammarList,
+  webkitSpeechGrammarList,
+  SpeechRecognitionEvent,
+  webkitSpeechRecognitionEvent,
+} = window;
+const speechRecognition = SpeechRecognition || webkitSpeechRecognition;
+const speechGrammarList = SpeechGrammarList || webkitSpeechGrammarList;
+const speechRecognitionEvent =
+  SpeechRecognitionEvent || webkitSpeechRecognitionEvent;
+const speechContent = speechSynthesis;
+
+// variables
 let score = 0;
 let isPlaying = false;
 let voices = [];
 let gamePhrases = [];
 let currentPhrase = "";
 let voiceType = "native";
+let mode = "listening";
+let isPaused = false;
 
 // functions
 function init() {
   stateText.innerText = `Ready with ${phrases.length} phrases`;
   gamePhrases = [...phrases];
-  const voicesCaller = synth.getVoices();
-
-  synth.onvoiceschanged = populateVoiceList;
+  const voicesCaller = speechContent.getVoices();
+  speechContent.onvoiceschanged = populateVoiceList;
+  speechContent.cancel();
 }
 
 function playGame() {
@@ -37,138 +58,123 @@ function playGame() {
     gameOver();
     return;
   }
+  if (isPlaying) {
+    displayText.innerText = "Paused!";
+    speechContent.pause();
+    isPlaying = false;
+    return;
+  }
+  if (speechContent.speaking) {
+    displayText.innerText = "Listening...";
+    speechContent.resume();
+    isPlaying = true;
+    return;
+  }
+
   currentPhrase = gamePhrases[0];
-  gamePhrases.shift();
   speak(currentPhrase.eng);
+  gamePhrases.shift();
 }
 
 function gameOver() {
   resultText.innerText = "Press Start!";
-  setIcon("bi-pause-fill", "bi-play-fill", "remove", "error");
+
   isPlaying = false;
   gamePhrases = [...phrases];
 }
 
-function setVoices(type) {
-  return voices.filter((sound) => VOICE_TYPE[type].includes(sound.lang));
-}
-
 function populateVoiceList() {
-  voices = synth.getVoices().sort(function (a, b) {
+  voices = speechContent.getVoices().sort(function (a, b) {
     const aname = a.name.toUpperCase(),
       bname = b.name.toUpperCase();
     return aname < bname ? 1 : -1;
   });
-  voices = setVoices(voiceType);
+  voices = voices.filter((sound) => VOICE_TYPE[voiceType].includes(sound.lang));
+  typeButton.innerText = voiceType.toUpperCase();
+  voiceType = voiceType === "native" ? "esl" : "native";
 }
 
-function genRandomVoiceIndex() {
-  const index = Math.floor(Math.random() * voices.length);
+function genRandomIndex(target) {
+  const index = Math.floor(Math.random() * target.length);
   return index;
 }
 
+function toggleStartButton() {
+  startButton.classList.toggle("waiting");
+  startButton.classList.toggle("speaking");
+}
+
 function speak(text) {
-  resultText.innerText = "Listening...";
-  if (voices.length === 0 || !voices) return;
-  let selectedVoice = voices[genRandomVoiceIndex()];
+  // random voice
+  const selectedVoice = voices[genRandomIndex(voices)];
+  const speech = new SpeechSynthesisUtterance(text);
 
-  if (synth.speaking) {
-    console.error("speechSynthesis.speaking");
-    return;
-  }
-  if (text !== "") {
-    const utterThis = new SpeechSynthesisUtterance(text);
-    utterThis.onend = function (event) {
-      resultText.innerText = "Type...";
-      answerInput.focus();
-    };
-    utterThis.onerror = function (event) {
-      console.error("SpeechSynthesisUtterance.onerror");
-    };
-    utterThis.voice = selectedVoice;
-    utterThis.pitch = 1;
-    utterThis.rate = 1;
-    utterThis.lang = selectedVoice.lang || "en-US";
-    synth.speak(utterThis);
-  }
+  // speech setting
+  speech.onstart = function (event) {
+    isPlaying = true;
+    toggleStartButton();
+  };
+  speech.onpause = function (event) {
+    toggleStartButton();
+  };
+  speech.onend = function (event) {
+    isPlaying = false;
+    displayText.innerText = "Type...";
+    wordInput.focus();
+    toggleStartButton();
+  };
+  speech.onerror = function (event) {
+    console.error(event);
+  };
+  speech.voice = selectedVoice;
+  speech.pitch = 1;
+  speech.rate = 1;
+  speech.lang = selectedVoice.lang;
+
+  speechContent.speak(speech);
 }
 
-function setIcon(oldClass, newClass, order = null, additionalClass = null) {
-  const target = document.querySelector(`.${oldClass}`);
-  if (!target) return;
-  target.classList.add(newClass);
-  target.classList.remove(oldClass);
-  if (order) {
-    target.classList[order](additionalClass);
-  }
-}
 function checkAnswer() {
   const currWord = currentPhrase.eng;
-  const ansWord = answerInput.value;
-  const currWordUpper = currWord.toUpperCase();
-  const ansWordUpper = ansWord.toUpperCase();
-  let i = 0;
+  const typedWord = wordInput.value;
   const targetLength =
-    currWordUpper.length > ansWordUpper.length
-      ? currWordUpper.length
-      : ansWordUpper.length;
-  let aSpan = currentPhrase.eng;
-  let bSpan = "";
+    currWord.length > typedWord.length ? currWord.length : typedWord.length;
+  let resultWord = "";
+  let i = 0;
   while (i < targetLength) {
     let letter = currWord.charAt(i);
-    if (currWordUpper.charAt(i) !== ansWordUpper.charAt(i)) {
-      letter = `<span class='error'>${ansWord.charAt(i)}</span>`;
+    if (
+      currWord.charAt(i).toUpperCase() !== typedWord.charAt(i).toUpperCase()
+    ) {
+      letter = `<span class='error'>${
+        typedWord.charAt(i) || currWord.charAt(i)
+      }</span>`;
     } else {
     }
-    bSpan = bSpan + letter;
+    resultWord = resultWord + letter;
     i++;
   }
-  const contents = `<span>${aSpan}</span><span>${bSpan}</span>`;
-  if (currWordUpper === ansWordUpper) {
-    resultText.classList.add("success");
-    resultText.classList.remove("error");
-    resultText.innerText = "Correct!";
-  } else {
-    resultText.classList.remove("success");
-    resultText.classList.add("error");
-    resultText.innerText = "Wrong!";
-  }
+
   const li = document.createElement("li");
-  li.innerHTML = contents;
-  historyList.appendChild(li);
-  historyContainer.scroll({
-    top: historyContainer.scrollHeight,
+  li.innerHTML = `<span>${currWord}</span><span>${resultWord}</span>`;
+  resultList.appendChild(li);
+  resultList.scroll({
+    top: resultList.scrollHeight,
     behavior: "smooth",
   });
-  answerInput.value = "";
+  wordInput.value = "";
   playGame();
 }
+
 // event listeners
 checkButton.addEventListener("click", () => checkAnswer());
-answerInput.addEventListener("keypress", (e) => {
+wordInput.addEventListener("keypress", (e) => {
   if (e.keyCode !== 13) return;
   checkAnswer();
 });
-typeButton.addEventListener("click", () => {
-  if (voices.length < 0) {
-    alert("지원하지 않는 브라우저 입니다.");
-    return;
-  }
-
-  voiceType = voiceType === "native" ? "esl" : "native";
-  typeButton.innerText = voiceType.toUpperCase();
-  populateVoiceList();
-});
-startButton.addEventListener("click", () => {
-  if (isPlaying) {
-    setIcon("bi-pause-fill", "bi-play-fill", "remove", "error");
-    isPlaying = false;
-  } else {
-    setIcon("bi-play-fill", "bi-pause-fill", "add", "error");
-    isPlaying = true;
-    playGame();
-  }
-});
+typeButton.addEventListener("click", () => populateVoiceList());
+startButton.addEventListener("click", () => playGame());
+modeButton.addEventListener("click", () => {});
 
 // initial call
 init();
