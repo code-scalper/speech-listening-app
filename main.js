@@ -10,43 +10,38 @@ const modeButton = document.querySelector(".mode-button");
 
 // input
 const wordInput = document.querySelector(".input-box input");
+const voiceSelect = document.querySelector(".voice-select");
 
 // text
 const displayText = document.querySelector(".display-text");
 const stateText = document.querySelector(".state-text");
 
 // wrapper
+const content = document.querySelector(".contents");
 const resultList = document.querySelector(".result");
 
 // speech APIs
-const {
-  speechSynthesis,
-  SpeechRecognition,
-  webkitSpeechRecognition,
-  SpeechGrammarList,
-  webkitSpeechGrammarList,
-  SpeechRecognitionEvent,
-  webkitSpeechRecognitionEvent,
-} = window;
-const speechRecognition = SpeechRecognition || webkitSpeechRecognition;
-const speechGrammarList = SpeechGrammarList || webkitSpeechGrammarList;
-const speechRecognitionEvent =
-  SpeechRecognitionEvent || webkitSpeechRecognitionEvent;
+const SpeechRecognition =
+  window.SpeechRecognition || window.webkitSpeechRecognition;
+const SpeechGrammarList =
+  window.SpeechGrammarList || window.webkitSpeechGrammarList;
+const SpeechRecognitionEvent =
+  window.SpeechRecognitionEvent || window.webkitSpeechRecognitionEvent;
 const speechContent = speechSynthesis;
 
 // variables
+const MODES = ["listening", "speech", "typing"];
 let score = 0;
 let isPlaying = false;
 let voices = [];
 let gamePhrases = [];
 let currentPhrase = "";
 let voiceType = "native";
-let mode = "listening";
+let modeIndex = 0;
 let isPaused = false;
 
 // functions
 function init() {
-  stateText.innerText = `Ready with ${phrases.length} phrases`;
   gamePhrases = [...phrases];
   const voicesCaller = speechContent.getVoices();
   speechContent.onvoiceschanged = populateVoiceList;
@@ -54,6 +49,23 @@ function init() {
 }
 
 function playGame() {
+  switch (MODES[modeIndex]) {
+    case "listening":
+      game1();
+      break;
+    case "speech":
+      game2();
+      break;
+    case "typing":
+      game3();
+      break;
+    default:
+      game1();
+  }
+}
+
+function game1() {
+  stateText.innerText = `You have ${gamePhrases.length} phrases left!`;
   if (gamePhrases.length === 0) {
     gameOver();
     return;
@@ -76,10 +88,46 @@ function playGame() {
   gamePhrases.shift();
 }
 
-function gameOver() {
-  resultText.innerText = "Press Start!";
+function game2() {
+  stateText.innerText = `0%`;
+  const phrase = genRandomIndex(phrases);
+  const engPhrase = phrase.eng.toLowerCase();
+  displayText.innerText = phrase.eng;
+  const grammar =
+    "#JSGF V1.0; grammar phrase; public <phrase> = " + engPhrase + ";";
+  const recognition = new SpeechRecognition();
+  const speechRecognitionList = new SpeechGrammarList();
+  speechRecognitionList.addFromString(grammar, 1);
+  recognition.grammars = speechRecognitionList;
+  recognition.lang = "en-US";
+  recognition.interimResults = false;
+  recognition.maxAlternatives = 1;
 
-  isPlaying = false;
+  recognition.start();
+  recognition.onresult = function (event) {
+    const { transcript, confidence } = event.results[0][0];
+    const speechResult = transcript.toLowerCase();
+
+    console.log(event, speechResult, recognition);
+    console.log("Confidence: " + confidence);
+  };
+
+  recognition.onspeechend = function () {
+    recognition.stop();
+  };
+
+  recognition.onerror = function (event) {
+    console.log(event.error);
+  };
+}
+
+function game3() {
+  if (wordInput.value.trim() === "") wordInput.value = "텍스트를 입력하세요!";
+  speak(wordInput.value, false);
+}
+
+function gameOver() {
+  displayText.innerText = "Press Start!";
   gamePhrases = [...phrases];
 }
 
@@ -90,27 +138,44 @@ function populateVoiceList() {
     return aname < bname ? 1 : -1;
   });
   voices = voices.filter((sound) => VOICE_TYPE[voiceType].includes(sound.lang));
-  typeButton.innerText = voiceType.toUpperCase();
+
+  const selectedIndex =
+    voiceSelect.selectedIndex < 0 ? 0 : voiceSelect.selectedIndex;
+  voiceSelect.innerHTML = "";
+  voices.forEach((voice) => {
+    const option = document.createElement("option");
+    option.textContent = voice.name;
+    option.setAttribute("data-lang", voice.lang);
+    option.setAttribute("data-name", voice.name);
+    voiceSelect.appendChild(option);
+  });
+  voiceSelect.selectedIndex = selectedIndex;
+
   voiceType = voiceType === "native" ? "esl" : "native";
 }
 
 function genRandomIndex(target) {
   const index = Math.floor(Math.random() * target.length);
-  return index;
+  return target[index];
 }
 
 function toggleStartButton() {
   startButton.classList.toggle("waiting");
   startButton.classList.toggle("speaking");
 }
+function getSelectedVoice() {
+  console.log(voices[voiceSelect.selectedIndex]);
+  return voices[voiceSelect.selectedIndex || 0];
+}
 
-function speak(text) {
+function speak(text, random = true) {
   // random voice
-  const selectedVoice = voices[genRandomIndex(voices)];
+  const selectedVoice = random ? genRandomIndex(voices) : getSelectedVoice();
   const speech = new SpeechSynthesisUtterance(text);
 
   // speech setting
   speech.onstart = function (event) {
+    displayText.innerText = "Listening...";
     isPlaying = true;
     toggleStartButton();
   };
@@ -131,10 +196,26 @@ function speak(text) {
   speech.rate = 1;
   speech.lang = selectedVoice.lang;
 
+  console.log(speech);
+
   speechContent.speak(speech);
 }
 
-function checkAnswer() {
+function checkAnswer(e) {
+  if (MODES[modeIndex] === "typing") {
+    if (e && e.keyCode !== 13) return;
+    game3();
+    return;
+  }
+  if (
+    speechContent.speaking ||
+    (e && e.keyCode !== 13) ||
+    wordInput.value.trim() === "" ||
+    !currentPhrase.eng
+  ) {
+    wordInput.focus();
+    return;
+  }
   const currWord = currentPhrase.eng;
   const typedWord = wordInput.value;
   const targetLength =
@@ -166,15 +247,29 @@ function checkAnswer() {
   playGame();
 }
 
+function changeMode() {
+  const currentMode = MODES[modeIndex++];
+  if (modeIndex === MODES.length) modeIndex = 0;
+  const mode = MODES[modeIndex];
+  content.classList.remove(currentMode);
+  content.classList.add(mode);
+  modeButton.innerText = `${mode} Mode`;
+  resultList.innerHTML = "";
+  if (mode === "typing") {
+    voiceSelect.style.display = "block";
+  } else {
+    voiceSelect.style.display = "none";
+  }
+}
+
 // event listeners
 checkButton.addEventListener("click", () => checkAnswer());
-wordInput.addEventListener("keypress", (e) => {
-  if (e.keyCode !== 13) return;
-  checkAnswer();
-});
+wordInput.addEventListener("keypress", (e) => checkAnswer(e));
 typeButton.addEventListener("click", () => populateVoiceList());
 startButton.addEventListener("click", () => playGame());
-modeButton.addEventListener("click", () => {});
-
+modeButton.addEventListener("click", () => changeMode());
+voiceSelect.addEventListener("change", () => {
+  console.log(voices[voiceSelect.selectedIndex], voiceSelect.selectedIndex);
+});
 // initial call
 init();

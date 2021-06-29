@@ -35,10 +35,31 @@ body {
   color: #fff;
   background: linear-gradient(30deg, #3c3b3f, #605c3c);
 }
+.header > div {
+  display: flex;
+  justify-content: flex-start;
+}
 .start-button {
   margin-right: 0.3rem;
 }
+.type-button {
+  margin-right: 0.3rem;
+}
+
+.voice-select {
+  display: none;
+  border-radius: 3px;
+  padding: 0.5rem;
+  min-width: 50px;
+  max-width: 100px;
+  font-size: 12px;
+}
+.voice-select option {
+  font-size: 10px;
+}
+
 .mode-button {
+  text-transform: capitalize;
   background: linear-gradient(30deg, #aa4b6b, #6b6b83, #3b8d99);
 }
 .contents {
@@ -48,11 +69,11 @@ body {
   align-items: center;
   flex-direction: column;
 }
-.listening .display-text {
+.display-text {
   color: #fff;
   font-size: 36px;
 }
-.listening .display-text {
+.speech .display-text {
   color: #fff;
   font-size: 20px;
 }
@@ -60,12 +81,21 @@ body {
   color: #777;
   margin-top: 2rem;
 }
+.speech .state-text {
+  font-size: 30px;
+  margin-top: 1rem;
+  color: #fff;
+  display: none;
+}
 
 .input-box {
   display: flex;
   justify-content: center;
   align-items: center;
   margin-top: 1rem;
+}
+.speech .input-box {
+  display: none;
 }
 .input-box input {
   border-radius: 5px;
