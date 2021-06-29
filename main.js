@@ -14,6 +14,7 @@ const historyList = document.querySelector(".result > ul");
 
 // Variables
 import { phrases, VOICE_TYPE } from "./phrases.js";
+
 const synth = window.speechSynthesis;
 let score = 0;
 let isPlaying = false;
@@ -26,9 +27,9 @@ let voiceType = "native";
 function init() {
   stateText.innerText = `Ready with ${phrases.length} phrases`;
   gamePhrases = [...phrases];
-  if (synth.onvoiceschanged !== undefined) {
-    synth.onvoiceschanged = populateVoiceList;
-  }
+  const voicesCaller = synth.getVoices();
+
+  synth.onvoiceschanged = populateVoiceList;
 }
 
 function playGame() {
@@ -68,7 +69,8 @@ function genRandomVoiceIndex() {
 
 function speak(text) {
   resultText.innerText = "Listening...";
-  const selectedVoice = voices[genRandomVoiceIndex()];
+  if (voices.length === 0 || !voices) return;
+  let selectedVoice = voices[genRandomVoiceIndex()];
 
   if (synth.speaking) {
     console.error("speechSynthesis.speaking");
@@ -83,11 +85,10 @@ function speak(text) {
     utterThis.onerror = function (event) {
       console.error("SpeechSynthesisUtterance.onerror");
     };
-    console.log(selectedVoice);
     utterThis.voice = selectedVoice;
     utterThis.pitch = 1;
     utterThis.rate = 1;
-    utterThis.lang = selectedVoice.lang;
+    utterThis.lang = selectedVoice.lang || "en-US";
     synth.speak(utterThis);
   }
 }
@@ -149,6 +150,11 @@ answerInput.addEventListener("keypress", (e) => {
   checkAnswer();
 });
 typeButton.addEventListener("click", () => {
+  if (voices.length < 0) {
+    alert("지원하지 않는 브라우저 입니다.");
+    return;
+  }
+
   voiceType = voiceType === "native" ? "esl" : "native";
   typeButton.innerText = voiceType.toUpperCase();
   populateVoiceList();

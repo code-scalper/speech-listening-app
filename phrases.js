@@ -25,10 +25,11 @@ export const phrases = [
 ];
 
 export const VOICE_TYPE = {
-  native: ["en-GB", "en-US"],
+  native: ["en-GB", "en-US", "en_US"],
   esl: [
     "ja-JP",
     "ko-KR",
+    "ko_KR",
     "pl-PL",
     "de-DE",
     "en-ES",
