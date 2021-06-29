@@ -93,8 +93,8 @@ function game2() {
   const phrase = genRandomIndex(phrases);
   const engPhrase = phrase.eng.toLowerCase();
   displayText.innerText = phrase.eng;
-  const grammar =
-    "#JSGF V1.0; grammar phrase; public <phrase> = " + engPhrase + ";";
+  displayText.innerText = phrase.eng;
+  const grammar = "#JSGF V1.0; grammar phrase; public <phrase> = " + "go" + ";";
   const recognition = new SpeechRecognition();
   const speechRecognitionList = new SpeechGrammarList();
   speechRecognitionList.addFromString(grammar, 1);
@@ -105,10 +105,18 @@ function game2() {
 
   recognition.start();
   recognition.onresult = function (event) {
+    console.log(event, "event");
     const { transcript, confidence } = event.results[0][0];
     const speechResult = transcript.toLowerCase();
+    generateLi(phrase.eng, speechResult);
 
-    console.log(event, speechResult, recognition);
+    const matched = phrase.eng.split("").reduce((acc, cur, index) => {
+      if (cur.toLowerCase() === speechResult.charAt(index).toLowerCase()) {
+        return acc + 1;
+      }
+    }, 0);
+    console.log(matched);
+
     console.log("Confidence: " + confidence);
   };
 
@@ -124,6 +132,16 @@ function game2() {
 function game3() {
   if (wordInput.value.trim() === "") wordInput.value = "텍스트를 입력하세요!";
   speak(wordInput.value, false);
+  const li = document.createElement("li");
+  li.innerHTML = `<span><span class='ready'>${wordInput.value}</span> (${
+    getSelectedVoice().name
+  })</span>`;
+  resultList.appendChild(li);
+  resultList.scroll({
+    top: resultList.scrollHeight,
+    behavior: "smooth",
+  });
+  wordInput.value = "";
 }
 
 function gameOver() {
@@ -151,6 +169,7 @@ function populateVoiceList() {
   });
   voiceSelect.selectedIndex = selectedIndex;
 
+  typeButton.innerText = voiceType.toUpperCase();
   voiceType = voiceType === "native" ? "esl" : "native";
 }
 
@@ -196,28 +215,11 @@ function speak(text, random = true) {
   speech.rate = 1;
   speech.lang = selectedVoice.lang;
 
-  console.log(speech);
-
   speechContent.speak(speech);
 }
 
-function checkAnswer(e) {
-  if (MODES[modeIndex] === "typing") {
-    if (e && e.keyCode !== 13) return;
-    game3();
-    return;
-  }
-  if (
-    speechContent.speaking ||
-    (e && e.keyCode !== 13) ||
-    wordInput.value.trim() === "" ||
-    !currentPhrase.eng
-  ) {
-    wordInput.focus();
-    return;
-  }
-  const currWord = currentPhrase.eng;
-  const typedWord = wordInput.value;
+function generateLi(currWord, typedWord = null) {
+  if (!typedWord) typedWord = wordInput.value;
   const targetLength =
     currWord.length > typedWord.length ? currWord.length : typedWord.length;
   let resultWord = "";
@@ -244,6 +246,25 @@ function checkAnswer(e) {
     behavior: "smooth",
   });
   wordInput.value = "";
+}
+
+function checkAnswer(e) {
+  if (MODES[modeIndex] === "typing") {
+    if (e && e.keyCode !== 13) return;
+    game3();
+    return;
+  }
+  if (
+    speechContent.speaking ||
+    (e && e.keyCode !== 13) ||
+    wordInput.value.trim() === "" ||
+    !currentPhrase.eng
+  ) {
+    wordInput.focus();
+    return;
+  }
+  generateLi(currentPhrase.eng);
+
   playGame();
 }
 
@@ -255,6 +276,7 @@ function changeMode() {
   content.classList.add(mode);
   modeButton.innerText = `${mode} Mode`;
   resultList.innerHTML = "";
+  wordInput.value = "";
   if (mode === "typing") {
     voiceSelect.style.display = "block";
   } else {
