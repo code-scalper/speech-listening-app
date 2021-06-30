@@ -27,7 +27,7 @@ const SpeechGrammarList =
   window.SpeechGrammarList || window.webkitSpeechGrammarList;
 const SpeechRecognitionEvent =
   window.SpeechRecognitionEvent || window.webkitSpeechRecognitionEvent;
-const speechContent = speechSynthesis;
+const speechContent = window.speechSynthesis;
 
 // variables
 const MODES = ["listening", "speech", "typing"];
@@ -168,7 +168,6 @@ function populateVoiceList() {
     voiceSelect.appendChild(option);
   });
   voiceSelect.selectedIndex = selectedIndex;
-
   typeButton.innerText = voiceType.toUpperCase();
   voiceType = voiceType === "native" ? "esl" : "native";
 }
@@ -215,7 +214,7 @@ function speak(text, random = true) {
   speech.rate = 1;
   speech.lang = selectedVoice.lang;
 
-  speechContent.speak(speech);
+  speechContent.speak(speech, true);
 }
 
 function generateLi(currWord, typedWord = null) {
