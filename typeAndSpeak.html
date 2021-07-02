@@ -9,18 +9,13 @@
   </head>
   <body>
     <div class="wrapper">
-      <header class="header">
+      <div class="speak-container">
         <select class="voice-select"></select>
-      </header>
-      <div class="contents">
-        <p class="display-text">Eng</p>
-        <div class="input-box">
-          <input type="text" class="word-input" />
-          <button class="run-button">Speak!</button>
-        </div>
-        <ul class="result"></ul>
+        <input type="text" class="word-input" />
+        <button class="speak-button">Speak!</button>
       </div>
+      <div class="result-text"></div>
     </div>
-    <script src="typeAndSpeak.js"></script>
+    <script src="typeAndSpeak.js" type="module"></script>
   </body>
 </html>

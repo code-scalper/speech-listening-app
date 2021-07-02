@@ -43,7 +43,6 @@ let isPaused = false;
 // functions
 function init() {
   gamePhrases = [...phrases];
-  const voicesCaller = speechContent.getVoices();
   speechContent.onvoiceschanged = populateVoiceList;
   speechContent.cancel();
 }
@@ -155,6 +154,7 @@ function populateVoiceList() {
       bname = b.name.toUpperCase();
     return aname < bname ? 1 : -1;
   });
+  console.log(voices, "voices");
   voices = voices.filter((sound) => VOICE_TYPE[voiceType].includes(sound.lang));
 
   const selectedIndex =
